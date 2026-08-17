@@ -1,1 +1,247 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#4f46e5">
+<title>Perguntados Board — Online</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap');
+body{font-family:'Nunito',sans-serif;background:#f0f8ff;user-select:none}h1,h2,h3,.title-font{font-family:'Fredoka One',cursive}.cat-geografia{background:#3b82f6;color:#fff}.cat-ciencia{background:#22c55e;color:#fff}.cat-historia{background:#eab308;color:#000}.cat-esportes{background:#f97316;color:#fff}.cat-arte{background:#d946ef;color:#fff}.cat-entretenimento{background:#ef4444;color:#fff}.peao-azul{background:#2563eb}.peao-verde{background:#16a34a}.peao-vermelho{background:#dc2626}.peao-amarelo{background:#facc15}.peao-laranja{background:#ea580c}.peao-roxo{background:#9333ea}.peao-rosa{background:#db2777}.peao-branco{background:#fff;border:1px solid #ccc}.peao-cinza{background:#6b7280}.peao-preto{background:#000}.board-space{transition:transform .2s}.board-space:hover{transform:scale(1.04)}.dice-anim{animation:roll .5s infinite linear}@keyframes roll{to{transform:rotate(360deg)}}::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:#f1f1f1}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}.hide-scrollbar::-webkit-scrollbar{display:none}.hide-scrollbar{scrollbar-width:none}.safe-bottom{padding-bottom:max(1rem,env(safe-area-inset-bottom))}.glass{background:rgba(255,255,255,.78);backdrop-filter:blur(10px)}
 
+</style>
+</head>
+<body class="h-screen w-full overflow-hidden flex flex-col items-center justify-center">
+<div id="app" class="w-full h-full max-w-6xl mx-auto flex flex-col relative shadow-2xl bg-white/50 backdrop-blur-sm sm:rounded-2xl sm:h-[95vh] sm:my-auto overflow-hidden">
+<header class="bg-indigo-600 text-white p-4 flex justify-between items-center shadow-md z-10 shrink-0">
+<div class="flex items-center gap-2"><i class="fas fa-dice text-2xl"></i><h1 class="text-2xl title-font tracking-wider">Perguntados Board</h1></div>
+<div id="header-status" class="text-sm font-bold bg-white/20 px-3 py-1 rounded-full">Menu Principal</div>
+</header>
+<main id="main-content" class="flex-1 overflow-y-auto relative bg-slate-50"></main>
+</div>
+<div id="modal-container" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4"></div>
+<div id="toast-container" class="fixed bottom-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none"></div>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, runTransaction } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
+// ============================================================
+// CONFIGURAÇÃO FIREBASE
+// Cole aqui os dados do seu aplicativo Web do Firebase.
+// Firebase Console > Configurações do projeto > Seus apps > Web\n// Projeto já configurado para: perguntados-board
+// ============================================================
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBG6wN4Xk-hu16gfLEDifGalopQOshxGE",
+  authDomain: "perguntados-board.firebaseapp.com",
+  projectId: "perguntados-board",
+  storageBucket: "perguntados-board.firebasestorage.app",
+  messagingSenderId: "294527320589",
+  appId: "1:294527320589:web:48d8395688732beb2cb44"
+};
+// Configuração fixa do projeto Perguntados Board.
+let firebaseConfig = {...DEFAULT_FIREBASE_CONFIG};
+
+function loadFirebaseConfig(){
+  return {...DEFAULT_FIREBASE_CONFIG};
+}
+
+function saveFirebaseConfig(cfg){
+  firebaseConfig = {...DEFAULT_FIREBASE_CONFIG,...cfg};
+}
+const APP_ID = "perguntados-board";
+
+const CATEGORIES = [
+  {id:'geografia',name:'Geografia',colorClass:'cat-geografia',icon:'fa-globe-americas'},
+  {id:'ciencia',name:'Ciência',colorClass:'cat-ciencia',icon:'fa-flask'},
+  {id:'historia',name:'História',colorClass:'cat-historia',icon:'fa-monument'},
+  {id:'esportes',name:'Esportes',colorClass:'cat-esportes',icon:'fa-futbol'},
+  {id:'arte',name:'Arte e Lit.',colorClass:'cat-arte',icon:'fa-palette'},
+  {id:'entretenimento',name:'Entreten.',colorClass:'cat-entretenimento',icon:'fa-film'}
+];
+const PAWN_COLORS = [
+  {id:'azul',class:'peao-azul',name:'Azul'},{id:'verde',class:'peao-verde',name:'Verde'},
+  {id:'vermelho',class:'peao-vermelho',name:'Vermelho'},{id:'amarelo',class:'peao-amarelo',name:'Amarelo'},
+  {id:'laranja',class:'peao-laranja',name:'Laranja'},{id:'roxo',class:'peao-roxo',name:'Roxo'},
+  {id:'rosa',class:'peao-rosa',name:'Rosa'},{id:'branco',class:'peao-branco',name:'Branco'},
+  {id:'cinza',class:'peao-cinza',name:'Cinza'},{id:'preto',class:'peao-preto',name:'Preto'}
+];
+const QUESTIONS = {
+ geografia:[
+  ['Qual é a capital do Japão?',['Pequim','Seul','Tóquio','Bangkok'],2],['Qual o maior rio do mundo em volume de água?',['Nilo','Amazonas','Yangtzé','Mississipi'],1],['Em qual continente fica o Deserto do Saara?',['Ásia','América','África','Europa'],2],['Qual é a capital da Austrália?',['Sydney','Melbourne','Canberra','Perth'],2],['Qual é o maior país do mundo em extensão territorial?',['Canadá','China','EUA','Rússia'],3],['Qual oceano banha a costa leste do Brasil?',['Pacífico','Atlântico','Índico','Ártico'],1],['Qual país é conhecido por ter o formato de uma bota?',['Espanha','Itália','Portugal','Grécia'],1],['A Cordilheira dos Andes fica em qual continente?',['Ásia','América do Norte','América do Sul','Europa'],2]
+ ],
+ ciencia:[
+  ['Qual é a fórmula química da água?',['CO2','H2O','O2','NaCl'],1],['Qual é o maior órgão do corpo humano?',['Coração','Fígado','Pele','Cérebro'],2],['Qual planeta é conhecido como Planeta Vermelho?',['Vênus','Marte','Júpiter','Saturno'],1],['Qual é o gás essencial que os humanos respiram?',['Gás Carbônico','Hidrogênio','Nitrogênio','Oxigênio'],3],['Animais que mamam quando filhotes são classificados como:',['Répteis','Mamíferos','Anfíbios','Aves'],1],['Qual é a estrela no centro do nosso sistema solar?',['Sirius','Alfa Centauri','Sol','Estrela Polar'],2],['Qual força invisível nos puxa em direção ao centro da Terra?',['Magnetismo','Atrito','Inércia','Gravidade'],3],['A água em estado sólido é conhecida como:',['Vapor','Chuva','Gelo','Nuvem'],2]
+ ],
+ historia:[
+  ['Quem foi o primeiro presidente do Brasil?',['Getúlio Vargas','Deodoro da Fonseca','Dom Pedro II','Juscelino Kubitschek'],1],['Em que ano a Segunda Guerra Mundial terminou?',['1945','1939','1918','1950'],0],['Qual império construiu Machu Picchu?',['Asteca','Maia','Inca','Romano'],2],['O navegador Cristóvão Colombo é creditado pelo “descobrimento” de qual continente?',['África','Ásia','América','Oceania'],2],['Quem foi o primeiro presidente negro da África do Sul?',['Martin Luther King','Nelson Mandela','Barack Obama','Malcolm X'],1],['Tutancâmon foi um famoso faraó de qual civilização antiga?',['Egípcia','Mesopotâmica','Grega','Romana'],0],['Qual país construiu a Grande Muralha?',['Japão','Índia','Mongólia','China'],3],['Em que ano ocorreu o descobrimento do Brasil pelos portugueses?',['1492','1500','1532','1822'],1]
+ ],
+ esportes:[
+  ['Quantos jogadores formam um time de futebol em campo?',['9','10','11','12'],2],['Em qual esporte se usa uma “raquete”?',['Basquete','Tênis','Vôlei','Natação'],1],['Qual país sediou as Olimpíadas de 2016?',['Japão','Inglaterra','Brasil','China'],2],['Onde surgiu a arte marcial Judô?',['China','Coreia do Sul','Japão','Tailândia'],2],['Qual é o tempo regulamentar de uma partida de futebol?',['60 minutos','80 minutos','90 minutos','120 minutos'],2],['No Karatê, qual é a cor da faixa dos iniciantes?',['Azul','Branca','Preta','Amarela'],1],['Quantos anéis formam o símbolo oficial dos Jogos Olímpicos?',['3','4','5','6'],2],['O que significa a sigla “NBA” nos esportes?',['National Baseball Association','National Boxing Academy','National Basketball Association','New Basketball Alliance'],2]
+ ],
+ arte:[
+  ['Quem pintou a Mona Lisa?',['Van Gogh','Picasso','Leonardo da Vinci','Michelangelo'],2],['Quem escreveu “Dom Quixote”?',['Machado de Assis','Miguel de Cervantes','Shakespeare','Dante Alighieri'],1],['Qual estilo musical é originário do Brasil?',['Jazz','Tango','Samba','Flamenco'],2],['Quem esculpiu a famosa obra “O Pensador”?',['Aleijadinho','Donatello','Auguste Rodin','Michelangelo'],2],['Quem é o autor do “Sítio do Picapau Amarelo”?',['Ziraldo','Monteiro Lobato','Mauricio de Sousa','Machado de Assis'],1],['Na mitologia romana, quem é a deusa do amor e da beleza?',['Atena','Hera','Afrodite','Vênus'],3],['A famosa obra “Abaporu” foi pintada por qual artista brasileira?',['Anita Malfatti','Tarsila do Amaral','Frida Kahlo','Tomie Ohtake'],1],['Quem é o criador das histórias em quadrinhos da Turma da Mônica?',['Ziraldo','Quino','Stan Lee','Mauricio de Sousa'],3]
+ ],
+ entretenimento:[
+  ['Qual é o nome do bruxo com uma cicatriz em forma de raio?',['Percy Jackson','Harry Potter','Frodo Bolseiro','Luke Skywalker'],1],['Em “De Volta para o Futuro”, qual é o carro máquina do tempo?',['Mustang','DeLorean','Ferrari','Fusca'],1],['Quem canta a música “Thriller”?',['Prince','David Bowie','Michael Jackson','Elton John'],2],['Quem é o principal criador do personagem Mickey Mouse?',['Stan Lee','Walt Disney','Matt Groening','Jim Henson'],1],['Qual é o nome do famoso vilão da saga Star Wars?',['Lord Voldemort','Coringa','Darth Vader','Thanos'],2],['Qual super-herói bilionário usa um traje inspirado em um morcego?',['Homem de Ferro','Superman','Homem-Aranha','Batman'],3],['Qual é o jogo de videogame mais vendido de todos os tempos, focado em blocos?',['Tetris','Super Mario','Minecraft','GTA V'],2],['Qual filme quebrou recordes de bilheteria com criaturas azuis chamadas Na’vi?',['Smurfs','Avatar','Star Wars','Vingadores'],1]
+ ]
+};
+
+const appEl=document.getElementById('app'), main=document.getElementById('main-content'), modal=document.getElementById('modal-container'), toastContainer=document.getElementById('toast-container');
+const STATE={view:'menu',mode:null,user:{id:null,name:'Jogador'},room:null,timer:null,questionTimer:null,questionExpired:false,unsubscribe:null};
+let db=null,auth=null,firebaseReady=false;
+
+function esc(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function uid(){return crypto.randomUUID?.()||Math.random().toString(36).slice(2)+Date.now().toString(36)}
+function roomRef(id){return doc(db,'rooms',id)}
+function newCode(){return Math.random().toString(36).slice(2,6).toUpperCase()}
+function emptyUsed(){return Object.fromEntries(CATEGORIES.map(c=>[c.id,[]]))}
+function validConfig(){return !!(firebaseConfig && firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId && firebaseConfig.appId)}
+function toast(msg,type='info'){const el=document.createElement('div');const bg=type==='error'?'bg-red-500':type==='success'?'bg-green-500':'bg-blue-500';el.className=`${bg} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 transition-all`;el.innerHTML=`<i class="fas fa-${type==='error'?'exclamation-circle':type==='success'?'check-circle':'info-circle'}"></i><span>${esc(msg)}</span>`;toastContainer.appendChild(el);setTimeout(()=>{el.classList.add('opacity-0');setTimeout(()=>el.remove(),250)},3000)}
+function setView(v){STATE.view=v;render()}
+function updateHeader(){const labels={menu:'Menu Principal',online_menu:'Modo Online',create_room:'Criar Sala',join_room:'Entrar em Sala',lobby:`Lobby: ${STATE.room?.id||''}`,game:'Jogando',game_over:'Fim de Jogo'};document.getElementById('header-status').textContent=labels[STATE.view]||'Perguntados Board'}
+
+async function connectFirebase(){
+  try{
+    if(!validConfig()){
+      firebaseReady=false;
+      console.error('Firebase config inválida', firebaseConfig);
+      return false;
+    }
+    if(window.__perguntadosFirebaseApp && db && auth){
+      firebaseReady=true;
+      return true;
+    }
+    const fb=initializeApp(firebaseConfig);
+    window.__perguntadosFirebaseApp=fb;
+    db=getFirestore(fb);
+    auth=getAuth(fb);
+    const credential = await signInAnonymously(auth);
+    STATE.user.id = credential.user.uid;
+    firebaseReady=true;
+    console.log('Firebase conectado:', firebaseConfig.projectId);
+    return true;
+  }catch(e){
+    firebaseReady=false;
+    STATE.user.id=uid();
+    console.error('ERRO FIREBASE:', e);
+    let msg=e?.message||String(e);
+    if(msg.includes('auth/operation-not-allowed'))
+      msg='Login anônimo está desativado. Ative Authentication > Método de login > Anônimo.';
+    else if(msg.includes('auth/unauthorized-domain'))
+      msg='Este domínio não está autorizado. Adicione o domínio do site em Authentication > Configurações > Domínios autorizados.';
+    else if(msg.includes('permission-denied'))
+      msg='Firestore recusou o acesso. Verifique as regras do Firestore.';
+    toast('Firebase: '+msg,'error');
+    return false;
+  }
+}
+function openFirebaseSetup(){
+  const c=firebaseConfig||{};
+  modal.classList.remove('hidden');
+  modal.innerHTML=`<div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden">
+    <div class="bg-indigo-600 text-white p-6"><h2 class="text-2xl title-font">Configurar Firebase</h2><p class="text-sm opacity-90 mt-1">Cole os dados do aplicativo Web criado no Firebase Console.</p></div>
+    <div class="p-6 space-y-3">
+      ${[['apiKey','API Key'],['authDomain','Auth Domain'],['projectId','Project ID'],['storageBucket','Storage Bucket'],['messagingSenderId','Messaging Sender ID'],['appId','App ID']].map(([id,label])=>`<div><label class="block text-xs font-bold text-slate-600 mb-1">${label}</label><input id="fb-${id}" value="${esc(c[id]||'')}" class="w-full p-3 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500" placeholder="${label}"></div>`).join('')}
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800"><b>Também ative:</b> Authentication → Sign-in method → Anonymous e crie o Cloud Firestore.</div>
+      <div class="flex gap-3 pt-2"><button id="fb-cancel" class="flex-1 py-3 bg-slate-200 rounded-xl font-bold">Cancelar</button><button id="fb-save" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold">Salvar e Testar</button></div>
+    </div></div>`;
+  document.getElementById('fb-cancel').onclick=()=>{modal.classList.add('hidden');modal.innerHTML='';};
+  document.getElementById('fb-save').onclick=async()=>{
+    const cfg={};['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'].forEach(k=>cfg[k]=document.getElementById('fb-'+k).value.trim());
+    if(!cfg.apiKey||!cfg.authDomain||!cfg.projectId||!cfg.appId){toast('Preencha os campos principais do Firebase.','error');return;}
+    saveFirebaseConfig(cfg);
+    const ok=await connectFirebase();
+    modal.classList.add('hidden');modal.innerHTML='';
+    if(ok){toast('Firebase conectado com sucesso!','success');setView('online_menu');}else{render();}
+  };
+}
+async function init(){
+  STATE.user.id=uid();
+  await connectFirebase();
+  render();
+}
+
+async function createRoom(size,maxPlayers){
+ if(STATE.mode==='online'&&!firebaseReady){toast('O Firebase não conseguiu conectar. Veja o erro exibido na tela.','error');return}
+ const id=newCode();const data={id,status:'lobby',hostId:STATE.user.id,boardSize:Number(size),maxPlayers:Number(maxPlayers),players:[{id:STATE.user.id,name:STATE.user.name,color:null,position:0,score:0}],turnIndex:0,currentAction:'waiting',diceValue:null,currentQuestion:null,winnerId:null,lastAnswerCorrect:null,usedQuestions:emptyUsed(),updatedAt:Date.now()};
+ try{if(STATE.mode==='online')await setDoc(roomRef(id),data);STATE.room=data;subscribeRoom();setView('lobby')}catch(e){console.error(e);toast('Não foi possível criar a sala: '+e.message,'error')}
+}
+
+function subscribeRoom(){if(STATE.unsubscribe)STATE.unsubscribe();if(STATE.mode!=='online'||!STATE.room)return;STATE.unsubscribe=onSnapshot(roomRef(STATE.room.id),snap=>{if(!snap.exists()){toast('A sala foi encerrada.','error');cleanupRoom();return}STATE.room=snap.data();syncViewFromRoom();render()},err=>{console.error(err);toast('Erro de sincronização: '+err.message,'error')})}
+function syncViewFromRoom(){if(!STATE.room)return;if(STATE.room.status==='playing'&&STATE.view==='lobby')STATE.view='game';if(STATE.room.status==='finished')STATE.view='game_over'}
+async function joinRoom(code){
+ if(!firebaseReady){toast('O Firebase não conseguiu conectar. Veja o erro exibido na tela.','error');return}
+ const id=code.trim().toUpperCase();if(id.length!==4){toast('A senha deve ter 4 caracteres.','error');return}
+ try{
+  await runTransaction(db,async tx=>{const ref=roomRef(id),snap=await tx.get(ref);if(!snap.exists())throw new Error('Sala não encontrada.');const room=snap.data();if(room.status!=='lobby')throw new Error('O jogo já começou.');if(room.players.length>=room.maxPlayers&&!room.players.some(p=>p.id===STATE.user.id))throw new Error('A sala está cheia.');if(!room.players.some(p=>p.id===STATE.user.id)){room.players.push({id:STATE.user.id,name:STATE.user.name,color:null,position:0,score:0});tx.update(ref,{players:room.players,updatedAt:Date.now()})}});
+  const snap=await getDoc(roomRef(id));STATE.room=snap.data();subscribeRoom();setView('lobby');
+ }catch(e){console.error(e);toast(e.message,'error')}
+}
+
+async function chooseColor(color){if(STATE.mode!=='online'||!STATE.room)return;try{await runTransaction(db,async tx=>{const ref=roomRef(STATE.room.id),snap=await tx.get(ref);if(!snap.exists())throw new Error('Sala não encontrada.');const room=snap.data();const me=room.players.find(p=>p.id===STATE.user.id);if(!me)throw new Error('Jogador não está na sala.');if(room.players.some(p=>p.id!==STATE.user.id&&p.color===color))throw new Error('Essa cor já foi escolhida.');room.players=room.players.map(p=>p.id===STATE.user.id?{...p,color}:p);tx.update(ref,{players:room.players,updatedAt:Date.now()})} )}catch(e){toast(e.message,'error')}}
+
+async function startGame(){
+ if(STATE.mode==='offline'){
+  const n=Number(document.getElementById('max-players')?.value||STATE.room.maxPlayers);const players=[];const names=[];for(let i=0;i<n;i++)names.push((document.getElementById(`off-name-${i}`)?.value||`Jogador ${i+1}`).trim()||`Jogador ${i+1}`);PAWN_COLORS.slice().sort(()=>Math.random()-.5).slice(0,n).forEach((color,i)=>players.push({id:`off-${i}`,name:names[i],color:color.id,position:0,score:0}));STATE.room={...STATE.room,players,maxPlayers:n,status:'playing',turnIndex:0,currentAction:'waiting'};setView('game');return}
+ try{await runTransaction(db,async tx=>{const ref=roomRef(STATE.room.id),snap=await tx.get(ref);if(!snap.exists())throw new Error('Sala não encontrada.');const room=snap.data();if(room.hostId!==STATE.user.id)throw new Error('Somente o líder pode iniciar.');if(room.players.length<2)throw new Error('É necessário pelo menos 2 jogadores.');if(room.players.some(p=>!p.color))throw new Error('Todos os jogadores precisam escolher uma cor.');tx.update(ref,{status:'playing',turnIndex:0,currentAction:'waiting',updatedAt:Date.now()})})}catch(e){toast(e.message,'error')}}
+
+async function rollDice(){
+ if(!STATE.room)return;const room=STATE.room;const current=room.players[room.turnIndex];if(current.id!==STATE.user.id&&STATE.mode==='online')return;
+ if(room.currentAction!=='waiting')return;
+ try{if(STATE.mode==='online'){await runTransaction(db,async tx=>{const ref=roomRef(room.id),snap=await tx.get(ref);const r=snap.data();if(r.status!=='playing'||r.currentAction!=='waiting'||r.players[r.turnIndex].id!==STATE.user.id)throw new Error('Não é sua vez.');tx.update(ref,{currentAction:'rolling',updatedAt:Date.now()})});await new Promise(r=>setTimeout(r,700));await finishRollOnline()}else{STATE.room.currentAction='rolling';render();await new Promise(r=>setTimeout(r,700));finishRollOffline()}}catch(e){toast(e.message,'error')}}
+function pickQuestion(room,dice){const p=room.players[room.turnIndex];const target=Math.min(p.position+dice,room.boardSize);const cat=CATEGORIES[(target-1+ CATEGORIES.length)%CATEGORIES.length];let used=[...(room.usedQuestions?.[cat.id]||[])];const qs=QUESTIONS[cat.id];let available=qs.map((_,i)=>i).filter(i=>!used.includes(i));if(!available.length){used=[];available=qs.map((_,i)=>i)}const idx=available[Math.floor(Math.random()*available.length)];used.push(idx);return {target,cat,q:qs[idx],used}}
+async function finishRollOnline(){
+ try{await runTransaction(db,async tx=>{const ref=roomRef(STATE.room.id),snap=await tx.get(ref);const r=snap.data();if(r.currentAction!=='rolling')return;const dice=1+Math.floor(Math.random()*6);const picked=pickQuestion(r,dice);const used={...(r.usedQuestions||emptyUsed()),[picked.cat.id]:picked.used};tx.update(ref,{diceValue:dice,currentAction:'answering',currentQuestion:{category:picked.cat,data:{q:picked.q[0],options:picked.q[1],a:picked.q[2]},startTime:Date.now()},usedQuestions:used,updatedAt:Date.now()})})}catch(e){toast('Erro ao lançar o dado: '+e.message,'error')}}
+function finishRollOffline(){const dice=1+Math.floor(Math.random()*6);const picked=pickQuestion(STATE.room,dice);STATE.room.diceValue=dice;STATE.room.currentAction='answering';STATE.room.currentQuestion={category:picked.cat,data:{q:picked.q[0],options:picked.q[1],a:picked.q[2]},startTime:Date.now()};STATE.questionExpired=false;startOfflineTimer();render()}
+function startOfflineTimer(){clearInterval(STATE.timer);STATE.questionExpired=false;STATE.timer=setInterval(()=>{if(!STATE.room?.currentQuestion){clearInterval(STATE.timer);return}renderQuestionTimer();if(Math.max(0,60-Math.floor((Date.now()-STATE.room.currentQuestion.startTime)/1000))<=0){clearInterval(STATE.timer);if(!STATE.questionExpired){STATE.questionExpired=true;handleAnswer(-1)}}},1000)}
+function renderQuestionTimer(){const el=document.getElementById('question-timer');if(!el||!STATE.room?.currentQuestion)return;const left=Math.max(0,60-Math.floor((Date.now()-STATE.room.currentQuestion.startTime)/1000));el.textContent=`00:${String(left).padStart(2,'0')}`;el.classList.toggle('text-red-500',left<=10);el.classList.toggle('text-orange-500',left>10&&left<=20);el.classList.toggle('text-green-500',left>20)}
+
+async function handleAnswer(index){
+ if(!STATE.room?.currentQuestion)return;const current=STATE.room.players[STATE.room.turnIndex];if(current.id!==STATE.user.id&&STATE.mode==='online')return;if(STATE.timer)clearInterval(STATE.timer);
+ if(STATE.mode==='offline'){applyAnswerOffline(index);return}
+ try{await runTransaction(db,async tx=>{const ref=roomRef(STATE.room.id),snap=await tx.get(ref);const r=snap.data();const player=r.players[r.turnIndex];if(r.currentAction!=='answering'||player.id!==STATE.user.id||!r.currentQuestion)return;const correct=index===r.currentQuestion.data.a;const players=r.players.map(p=>({...p}));if(correct){players[r.turnIndex].position=Math.min(players[r.turnIndex].position+r.diceValue,r.boardSize);players[r.turnIndex].score+=10}const winner=players[r.turnIndex].position>=r.boardSize;const next=winner?r.turnIndex:(r.turnIndex+1)%players.length;tx.update(ref,{players,currentQuestion:null,currentAction:'moving',lastAnswerCorrect:correct,winnerId:winner?players[r.turnIndex].id:null,status:winner?'finished':'playing',turnIndex:next,updatedAt:Date.now()})});
+  if(!STATE.room||STATE.room.status==='finished')return;setTimeout(()=>clearMovingState(),2500);
+ }catch(e){toast('Erro ao registrar resposta: '+e.message,'error')}}
+function applyAnswerOffline(index){const r=STATE.room,p=r.players[r.turnIndex],correct=index===r.currentQuestion.data.a;if(correct){p.position=Math.min(p.position+r.diceValue,r.boardSize);p.score+=10}r.lastAnswerCorrect=correct;r.currentQuestion=null;r.currentAction='moving';if(p.position>=r.boardSize){r.status='finished';r.winnerId=p.id} else r.turnIndex=(r.turnIndex+1)%r.players.length;render();if(r.status!=='finished')setTimeout(()=>{r.currentAction='waiting';r.lastAnswerCorrect=null;render()},2500)}
+async function clearMovingState(){if(STATE.mode==='offline'){STATE.room.currentAction='waiting';STATE.room.lastAnswerCorrect=null;render();return}try{await runTransaction(db,async tx=>{const ref=roomRef(STATE.room.id),snap=await tx.get(ref);const r=snap.data();if(r.status==='playing'&&r.currentAction==='moving')tx.update(ref,{currentAction:'waiting',lastAnswerCorrect:null,diceValue:null,updatedAt:Date.now()})})}catch(e){console.error(e)}}
+
+async function leaveRoom(){clearInterval(STATE.timer);if(STATE.unsubscribe){STATE.unsubscribe();STATE.unsubscribe=null}if(STATE.mode==='online'&&STATE.room&&firebaseReady){try{await runTransaction(db,async tx=>{const ref=roomRef(STATE.room.id),snap=await tx.get(ref);if(!snap.exists())return;const r=snap.data();const players=r.players.filter(p=>p.id!==STATE.user.id);if(!players.length)tx.delete(ref);else{const hostId=r.hostId===STATE.user.id?players[0].id:r.hostId;const turnIndex=Math.min(r.turnIndex,players.length-1);tx.update(ref,{players,hostId,turnIndex,updatedAt:Date.now()})}})}catch(e){console.error(e)}}STATE.room=null;STATE.view='menu';render()}
+function startQuestionTicker(){clearInterval(STATE.questionTimer);if(STATE.mode!=='online')return;STATE.questionTimer=setInterval(()=>{if(STATE.view!=='game'||!STATE.room?.currentQuestion){clearInterval(STATE.questionTimer);return}renderQuestionTimer();const left=Math.max(0,60-Math.floor((Date.now()-STATE.room.currentQuestion.startTime)/1000));if(left<=0&&!STATE.questionExpired&&STATE.room.players[STATE.room.turnIndex].id===STATE.user.id){STATE.questionExpired=true;clearInterval(STATE.questionTimer);handleAnswer(-1)}},500)}
+
+function render(){updateHeader();main.innerHTML=views[STATE.view]?.()||views.menu();modal.innerHTML='';modal.classList.add('hidden');if(STATE.view==='game'&&STATE.room?.currentQuestion&&STATE.room.currentAction==='answering'){modal.innerHTML=questionModal();modal.classList.remove('hidden');startQuestionTicker()}else if(STATE.view==='game'&&STATE.room?.lastAnswerCorrect!==null&&STATE.room.currentAction==='moving'){modal.innerHTML=resultModal();modal.classList.remove('hidden')}attach();}
+function topBack(target){return `<button class="absolute top-4 left-4 text-slate-500 hover:text-slate-800" data-view="${target}"><i class="fas fa-arrow-left text-2xl"></i> Voltar</button>`}
+const views={
+ menu:()=>`<div class="flex flex-col items-center justify-center h-full p-4 gap-6"><div class="text-center mb-5"><div class="flex justify-center gap-2 mb-4">${CATEGORIES.map(c=>`<div class="w-10 h-10 rounded-full ${c.colorClass} flex items-center justify-center text-xl shadow-lg"><i class="fas ${c.icon}"></i></div>`).join('')}</div><h2 class="text-4xl text-slate-800 title-font mb-2">Bem-vindo ao</h2><h1 class="text-6xl text-indigo-600 title-font drop-shadow-md">Perguntados</h1></div><div class="w-full max-w-sm space-y-4"><label class="block text-sm font-bold text-gray-700">Seu nome<input id="player-name-input" class="w-full mt-2 p-3 border-2 border-slate-300 rounded-xl outline-none text-center text-lg font-bold" value="${esc(STATE.user.name)}" placeholder="Digite seu nome"></label><button data-mode="online" class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl text-xl font-bold shadow-lg"><i class="fas fa-globe mr-2"></i>Jogar Online</button><p class="text-xs text-center text-slate-500">Jogue com amigos em outros dispositivos</p><div class="my-3 text-center text-sm text-gray-400">OU</div><button data-mode="offline" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl text-xl font-bold shadow-lg"><i class="fas fa-users mr-2"></i>Jogar Offline</button><p class="text-xs text-center text-slate-500">Pass-and-play em um único dispositivo</p></div></div>`,
+ online_menu:()=>`<div class="flex flex-col items-center justify-center h-full p-4 gap-6 relative">${topBack('menu')}<h2 class="text-3xl title-font text-slate-800">Modo Online</h2><div class="w-full max-w-md bg-white rounded-2xl shadow p-4 text-sm mb-2"><div class="font-bold mb-1">Status do servidor</div><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full ${firebaseReady?'bg-green-500':'bg-red-500'}"></span><span>${firebaseReady?'Firebase conectado':'Firebase não configurado'}</span></div>${firebaseReady?'<p class="text-xs text-slate-500 mt-2">Servidor pronto para criar e entrar em salas.</p>':'<p class="text-xs text-slate-500 mt-2">O Firebase já está configurado neste arquivo.</p>'}<button data-firebase-setup class="mt-3 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold"><i class="fas fa-gear mr-2"></i>${firebaseReady?'Alterar configuração':'Configurar Firebase'}</button></div><div class="w-full max-w-sm space-y-5"><button data-view="create_room" class="w-full py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl text-xl font-bold shadow-lg">Criar Nova Sala</button><button data-view="join_room" class="w-full py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-2xl text-xl font-bold shadow-lg">Entrar com Senha</button></div></div>`,
+ create_room:()=>`<div class="flex flex-col items-center justify-center h-full p-4 relative">${topBack(STATE.mode==='online'?'online_menu':'menu')}<div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md"><h2 class="text-2xl title-font text-center text-slate-800 mb-6">Configurar Jogo</h2><label class="block text-sm font-bold text-gray-700 mb-4">Tamanho do Tabuleiro<select id="board-size" class="w-full mt-2 p-3 border-2 border-slate-200 rounded-xl"><option value="20">20 Casas (Rápido)</option><option value="30" selected>30 Casas (Normal)</option><option value="40">40 Casas (Médio)</option><option value="50">50 Casas (Longo)</option><option value="60">60 Casas (Épico)</option></select></label><label class="block text-sm font-bold text-gray-700">Número de Jogadores<select id="max-players" class="w-full mt-2 p-3 border-2 border-slate-200 rounded-xl"><option value="2">2 Jogadores</option><option value="3">3 Jogadores</option><option value="4" selected>4 Jogadores</option><option value="5">5 Jogadores</option><option value="6">6 Jogadores</option></select></label>${STATE.mode==='offline'?'<div class="mt-4 pt-4 border-t"><div class="text-sm font-bold text-gray-700 mb-2">Nomes dos Jogadores</div><div id="offline-names-container" class="space-y-2"></div></div>':''}<button id="btn-create" class="w-full mt-6 py-4 bg-indigo-600 text-white rounded-xl text-lg font-bold shadow-md">Criar Sala</button></div></div>`,
+ join_room:()=>`<div class="flex flex-col items-center justify-center h-full p-4 relative">${topBack('online_menu')}<div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm text-center"><h2 class="text-2xl title-font text-slate-800 mb-2">Entrar na Sala</h2><p class="text-slate-500 mb-6 text-sm">Digite a senha de 4 caracteres.</p><input id="room-code" maxlength="4" class="w-full p-4 text-center text-4xl font-bold tracking-widest border-2 border-slate-300 rounded-2xl mb-6 uppercase" placeholder="ABCD"><button id="btn-join" class="w-full py-4 bg-pink-500 text-white rounded-xl text-lg font-bold shadow-md">Entrar</button></div></div>`,
+ lobby:()=>lobbyView(),game:()=>gameView(),game_over:()=>gameOverView()
+};
+function lobbyView(){const r=STATE.room,isHost=r.hostId===STATE.user.id,used=r.players.map(p=>p.color).filter(Boolean);let players=r.players.map(p=>`<div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg border ${p.id===STATE.user.id?'ring-2 ring-indigo-200':''}"><div class="flex items-center"><div class="w-7 h-7 rounded-full border-2 border-white shadow-sm mr-3 peao-${p.color||'branco'}"></div><span class="font-bold text-slate-700">${esc(p.name)} ${p.id===STATE.user.id?'(Você)':''} ${p.id===r.hostId?'<i class="fas fa-crown text-yellow-500 ml-2"></i>':''}</span></div><span class="text-xs ${p.color?'text-green-500':'text-orange-500'}">${p.color?'Pronto':'Escolhendo cor...'}</span></div>`).join('');for(let i=r.players.length;i<r.maxPlayers;i++)players+=`<div class="flex items-center justify-center bg-slate-100/50 p-3 rounded-lg border border-dashed border-slate-300 text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>Aguardando jogador...</div>`;const colors=PAWN_COLORS.map(c=>{const mine=r.players.find(p=>p.id===STATE.user.id)?.color===c.id;const taken=used.includes(c.id)&&!mine;return `<button class="w-10 h-10 rounded-full ${c.class} shadow-md ${mine?'ring-4 ring-offset-2 ring-indigo-500 scale-110':''} ${taken?'opacity-30':''}" data-color="${c.id}" ${taken?'disabled':''}></button>`}).join('');const ready=r.players.length>=2&&r.players.every(p=>p.color);return `<div class="flex flex-col h-full"><div class="bg-indigo-50 p-6 shadow-sm border-b flex justify-between items-center"><div><h2 class="text-2xl title-font text-indigo-900">Sala de Espera</h2><p class="text-sm text-indigo-700">Senha: <strong class="text-lg bg-indigo-200 px-2 py-1 rounded select-all">${r.id}</strong></p></div><button data-leave class="px-4 py-2 bg-red-100 text-red-600 rounded-lg font-bold">Sair</button></div><div class="flex-1 p-6 overflow-y-auto flex flex-col md:flex-row gap-6"><div class="flex-1 bg-white p-6 rounded-2xl shadow-sm border"><h3 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Jogadores (${r.players.length}/${r.maxPlayers})</h3><div class="space-y-2">${players}</div><div class="mt-6"><h3 class="text-sm font-bold text-slate-600 mb-2">Escolha seu peão</h3><div class="flex flex-wrap gap-2 justify-center">${colors}</div></div></div><div class="md:w-1/3 bg-slate-50 p-6 rounded-2xl border flex flex-col justify-center text-center"><h3 class="text-lg font-bold text-slate-700 mb-2">Regras</h3><ul class="text-sm text-slate-600 text-left space-y-2 mb-6"><li>✓ Tabuleiro: <b>${r.boardSize} casas</b></li><li>✓ Tempo: <b>60 seg/pergunta</b></li><li>✓ Acertou: avança o valor do dado</li><li>✓ Vence quem chegar ao fim</li></ul>${isHost?`<button data-start-game ${ready?'':'disabled'} class="w-full py-4 ${ready?'bg-green-500':'bg-gray-300'} text-white rounded-xl text-lg font-bold">${ready?'Iniciar Jogo':'Aguardando Jogadores...'}</button>`:'<div class="p-4 bg-yellow-100 text-yellow-800 rounded-xl text-sm font-bold">Aguardando o líder iniciar...</div>'}</div></div></div>`}
+function gameView(){const r=STATE.room,cur=r.players[r.turnIndex],mine=STATE.mode==='offline'||cur.id===STATE.user.id;let board='';for(let i=1;i<=r.boardSize;i++){const cat=CATEGORIES[(i-1)%CATEGORIES.length],here=r.players.filter(p=>p.position===i);board+=`<div class="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center rounded-lg shadow-sm border-2 border-white ${cat.colorClass} board-space"><span class="opacity-50 font-bold">${i}</span><div class="absolute inset-0 flex flex-wrap items-center justify-center gap-1 p-1">${here.map(p=>`<div class="w-4 h-4 rounded-full peao-${p.color} border border-white shadow-sm" title="${esc(p.name)}"></div>`).join('')}</div><div class="absolute bottom-1 right-1 opacity-30 text-xs"><i class="fas ${cat.icon}"></i></div></div>`}const scores=r.players.map((p,i)=>`<div class="min-w-[150px] flex items-center gap-2 p-2 rounded-lg ${i===r.turnIndex?'bg-indigo-100 ring-2 ring-indigo-400':'bg-white border'}"><div class="w-8 h-8 rounded-full peao-${p.color} flex items-center justify-center text-white font-bold">${p.position}</div><div><div class="font-bold text-sm">${esc(p.name)} ${i===r.turnIndex?'<span class="text-xs text-indigo-500">(vez)</span>':''}</div><div class="text-xs text-slate-500">${p.score} pontos</div></div></div>`).join('');let action='';if(r.currentAction==='waiting'&&mine)action='<button data-roll class="px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl text-2xl font-bold shadow-xl"><i class="fas fa-dice mr-2"></i>Rolar Dado</button>';else if(r.currentAction==='rolling')action='<div class="text-center"><i class="fas fa-dice text-6xl text-indigo-500 dice-anim"></i><p class="mt-2 font-bold text-slate-600">Rolando...</p></div>';else if(r.currentAction==='answering')action=`<div class="text-center text-slate-600 font-bold animate-pulse">${mine?'Sua vez de responder!':`Aguardando ${esc(cur.name)} responder...`}</div>`;else action=`<div class="text-center text-slate-500">Aguardando a vez de <b>${esc(cur.name)}</b></div>`;return `<div class="flex flex-col h-full"><div class="bg-white p-3 shadow-sm border-b flex gap-2 overflow-x-auto hide-scrollbar">${scores}</div><div class="flex-1 p-4 overflow-auto bg-slate-100"><div class="max-w-5xl mx-auto"><div class="flex flex-wrap gap-2 justify-center p-4 bg-white/60 rounded-3xl shadow-inner border"><div class="relative w-20 h-20 flex items-center justify-center rounded-full bg-slate-200 border-4 border-slate-300"><span class="font-bold text-slate-500">LARGADA</span><div class="absolute inset-0 flex flex-wrap items-center justify-center gap-1">${r.players.filter(p=>p.position===0).map(p=>`<div class="w-5 h-5 rounded-full peao-${p.color} border-2 border-white"></div>`).join('')}</div></div><div class="w-full flex flex-wrap gap-2 justify-center mt-4">${board}</div></div></div></div><div class="bg-white p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] shrink-0 flex justify-center items-center min-h-[96px]">${action}</div></div>`}
+function questionModal(){const q=STATE.room.currentQuestion,cat=q.category,cur=STATE.room.players[STATE.room.turnIndex],mine=STATE.mode==='offline'||cur.id===STATE.user.id;const elapsed=Math.floor((Date.now()-q.startTime)/1000),left=Math.max(0,60-elapsed);return `<div class="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl"><div class="${cat.colorClass} p-6 text-center relative"><div class="absolute top-4 right-4 bg-white/20 px-3 py-1 rounded-full text-sm font-bold"><i class="fas fa-dice"></i> ${STATE.room.diceValue}</div><i class="fas ${cat.icon} text-4xl mb-2"></i><h2 class="text-2xl title-font uppercase">${cat.name}</h2></div><div class="p-8 flex flex-col items-center"><div id="question-timer" class="text-4xl font-black ${left<=10?'text-red-500':left<=20?'text-orange-500':'text-green-500'} mb-6 font-mono">00:${String(left).padStart(2,'0')}</div><h3 class="text-xl md:text-2xl font-bold text-center text-slate-800">${esc(q.data.q)}</h3>${mine?`<div class="space-y-3 mt-6 w-full">${q.data.options.map((o,i)=>`<button data-answer="${i}" class="w-full text-left p-4 rounded-xl border-2 border-slate-200 hover:bg-slate-50 transition font-bold text-slate-700">${String.fromCharCode(65+i)}. ${esc(o)}</button>`).join('')}</div>`:`<div class="mt-8 text-center text-slate-500"><i class="fas fa-hourglass-half text-4xl mb-4 opacity-50 animate-pulse"></i><p>O jogador <b>${esc(cur.name)}</b> está pensando...</p><p class="text-xs mt-2">Se acertar, avançará ${STATE.room.diceValue} casas.</p></div>`}</div></div>`}
+function resultModal(){const ok=STATE.room.lastAnswerCorrect;return `<div class="bg-white w-full max-w-sm rounded-3xl p-8 text-center shadow-2xl"> <div class="w-24 h-24 ${ok?'bg-green-100':'bg-red-100'} rounded-full flex items-center justify-center mx-auto mb-6"><i class="fas fa-${ok?'check text-green-500':'times text-red-500'} text-5xl"></i></div><h2 class="text-3xl title-font">${ok?'Correto!':'Incorreto!'}</h2><p class="text-slate-600 text-lg mt-2">${ok?`Avançou <b class="text-indigo-600">${STATE.room.diceValue}</b> casas.`:'Continua na mesma casa.'}</p></div>`}
+function gameOverView(){const ps=[...STATE.room.players].sort((a,b)=>b.position-a.position||b.score-a.score),w=ps.find(p=>p.id===STATE.room.winnerId)||ps[0];return `<div class="flex flex-col items-center justify-center h-full p-4 overflow-y-auto"><div class="text-center mb-8"><i class="fas fa-trophy text-6xl text-yellow-400 mb-4"></i><h1 class="text-4xl title-font">Fim de Jogo!</h1><p class="text-xl text-slate-600 mt-2"><b>${esc(w.name)}</b> venceu!</p></div><div class="w-full max-w-lg bg-white p-6 rounded-3xl shadow-xl"><h2 class="text-xl font-bold text-slate-700 mb-4 border-b pb-2">Ranking Final</h2>${ps.map((p,i)=>`<div class="flex items-center justify-between p-4 ${i===0?'bg-yellow-50 ring-2 ring-yellow-400':'bg-slate-50'} rounded-xl mb-2"><div class="flex items-center gap-3"><div class="w-8 font-bold text-slate-400 text-xl">${i+1}º</div><div class="w-10 h-10 rounded-full peao-${p.color}"></div><div class="font-bold">${esc(p.name)}</div></div><div class="text-right"><div class="font-black text-indigo-600">${p.score} pts</div><div class="text-xs text-slate-500">Casa ${p.position}</div></div></div>`).join('')}<button data-leave class="w-full mt-4 py-4 bg-slate-800 text-white rounded-xl text-lg font-bold">Voltar ao Menu</button></div></div>`}
+
+function attach(){
+ const fbSetup=document.querySelector('[data-firebase-setup]'); if(fbSetup) fbSetup.onclick=openFirebaseSetup;
+ const name=document.getElementById('player-name-input');if(name)name.onchange=()=>{STATE.user.name=name.value.trim()||'Jogador'};
+ document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{STATE.mode=b.dataset.mode;setView(b.dataset.mode==='online'?'online_menu':'create_room')});
+ document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+ document.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>chooseColor(b.dataset.color));
+ document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>handleAnswer(Number(b.dataset.answer)));
+ document.querySelectorAll('[data-leave]').forEach(b=>b.onclick=leaveRoom);
+ const create=document.getElementById('btn-create');if(create){const sel=document.getElementById('max-players');const refresh=()=>{if(STATE.mode!=='offline')return;const box=document.getElementById('offline-names-container');box.innerHTML='';for(let i=0;i<Number(sel.value);i++)box.innerHTML+=`<input id="off-name-${i}" class="w-full p-2 border rounded bg-white text-sm" value="${esc(i===0?STATE.user.name:`Jogador ${i+1}`)}" placeholder="Jogador ${i+1}">`};sel.onchange=refresh;refresh();create.onclick=()=>createRoom(document.getElementById('board-size').value,sel.value)}
+ const join=document.getElementById('btn-join');if(join){const input=document.getElementById('room-code');join.onclick=()=>joinRoom(input.value);input.onkeydown=e=>{if(e.key==='Enter')joinRoom(input.value)}}
+ const roll=document.querySelector('[data-roll]');if(roll)roll.onclick=rollDice;
+ const start=document.querySelector('[data-start-game]');if(start)start.onclick=startGame;
+}
+
+window.leaveRoom=leaveRoom;window.STATE=STATE;
+init();
+
+</script>
+</body>
+</html>
