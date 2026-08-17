@@ -256,6 +256,59 @@ function roomRef(id){
     return doc(db,"rooms",id);
 }
 
+function showFirebaseError(error){
+    const code = error?.code || "sem-codigo";
+    const message = error?.message || String(error || "Erro desconhecido");
+
+    const hints = {
+        "auth/unauthorized-domain":
+            "O domínio do GitHub Pages não está autorizado no Firebase Authentication.",
+        "auth/operation-not-allowed":
+            "O login Anônimo não está ativado no Firebase Authentication.",
+        "auth/network-request-failed":
+            "O navegador não conseguiu acessar o serviço de autenticação do Firebase.",
+        "auth/invalid-api-key":
+            "A chave da API do Firebase está incorreta.",
+        "auth/api-key-not-valid":
+            "A chave da API do Firebase não é válida para este projeto.",
+        "permission-denied":
+            "O Firestore recusou a operação. Verifique as Regras do Firestore."
+    };
+
+    const main = document.getElementById("main-content");
+    main.innerHTML = `
+      <div class="min-h-full flex items-center justify-center p-6">
+        <div class="w-full max-w-2xl bg-white rounded-3xl shadow-xl p-8">
+          <div class="text-center mb-6">
+            <div class="text-5xl text-red-500 mb-3"><i class="fas fa-circle-exclamation"></i></div>
+            <h2 class="text-3xl title-font text-slate-800">Erro de conexão com o Firebase</h2>
+            <p class="text-slate-500 mt-2">Agora estamos mostrando o erro real retornado pelo Firebase.</p>
+          </div>
+
+          <div class="bg-red-50 border border-red-200 rounded-2xl p-5">
+            <div class="font-bold text-red-700 mb-2">Código</div>
+            <code class="block bg-white rounded-xl p-3 text-sm break-all">${escapeHtml(code)}</code>
+            <div class="font-bold text-red-700 mt-4 mb-2">Mensagem</div>
+            <code class="block bg-white rounded-xl p-3 text-sm break-all">${escapeHtml(message)}</code>
+          </div>
+
+          <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 mt-5 text-sm text-slate-700">
+            <strong>O que verificar:</strong>
+            <ul class="list-disc ml-5 mt-2 space-y-1">
+              <li>Authentication → Método de login → Anônimo: ativado.</li>
+              <li>Authentication → Configurações → Domínios autorizados → sophiasantos30-ctrl.github.io.</li>
+              <li>Cloud Firestore → Regras.</li>
+            </ul>
+            <p class="mt-3 font-semibold">${escapeHtml(hints[code] || "Use o código acima para identificar exatamente a causa.")}</p>
+          </div>
+
+          <button onclick="location.reload()" class="w-full mt-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold">
+            <i class="fas fa-rotate-right mr-2"></i> Tentar novamente
+          </button>
+        </div>
+      </div>`;
+}
+
 async function initFirebase(){
     try{
         firebaseApp=initializeApp(firebaseConfig);
@@ -265,20 +318,31 @@ async function initFirebase(){
         await signInAnonymously(auth);
 
         await new Promise((resolve,reject)=>{
-            const unsub=onAuthStateChanged(auth,user=>{
+            let finished=false;
+            const done=(fn,arg)=>{
+                if(finished) return;
+                finished=true;
+                try { unsub && unsub(); } catch(e){}
+                fn(arg);
+            };
+            let unsub=null;
+
+            unsub=onAuthStateChanged(auth,user=>{
                 if(user){
                     STATE.user.id=user.uid;
                     firebaseReady=true;
-                    unsub();
-                    resolve();
+                    done(resolve);
                 }
-            },reject);
-            setTimeout(()=>reject(new Error("Tempo excedido ao autenticar.")),10000);
+            },error=>done(reject,error));
+
+            setTimeout(()=>done(reject,new Error("Tempo excedido ao autenticar no Firebase.")),10000);
         });
     }catch(error){
         console.error("Firebase:",error);
         firebaseReady=false;
-        STATE.user.id=uid();
+        STATE.firebaseError=error;
+        showFirebaseError(error);
+        return;
     }
     render();
 }
