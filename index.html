@@ -2,44 +2,71 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Perguntados Board</title>
 <style>
-:root{--purple:#5146e5;--purple2:#8b5cf6;--pink:#ec4899;--ink:#1f2a44;--muted:#71819c;--bg:#f5f8fc;--line:#e6ebf2;--danger:#ef4444;--ok:#16a34a}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(135deg,#f7faff,#eef4fb);color:var(--ink)}
-.app{min-height:100vh;padding:16px}.shell{max-width:1180px;margin:auto;background:rgba(255,255,255,.9);min-height:calc(100vh - 32px);border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(31,42,68,.14)}
-header{height:82px;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px}.logo{font-weight:900;font-size:29px;letter-spacing:-1px;display:flex;align-items:center;gap:12px}.dice{font-size:31px}.mode{background:rgba(255,255,255,.18);padding:10px 18px;border-radius:24px;font-weight:800}
-main{padding:30px 22px 50px}.back{border:0;background:none;color:#6d7e98;font-size:19px;cursor:pointer;margin-bottom:30px}.center{max-width:700px;margin:0 auto;text-align:center}
-h1{font-size:42px;margin:25px 0 8px;letter-spacing:-1.5px}.subtitle{font-size:19px;color:var(--muted);margin:0 0 28px}
-.status{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px;text-align:left;box-shadow:0 5px 15px rgba(31,42,68,.06);margin-bottom:26px}.status-title{font-weight:800;font-size:18px}.dot{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--danger);margin-right:9px}.dot.ok{background:var(--ok)}.status-msg{color:var(--muted);margin-top:8px}
-.btn{width:100%;border:0;border-radius:18px;padding:20px 24px;color:#fff;font-size:25px;font-weight:900;cursor:pointer;box-shadow:0 9px 18px rgba(31,42,68,.12);margin:10px 0;transition:.15s}.btn:hover{transform:translateY(-2px)}.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}.create{background:linear-gradient(135deg,#9b4df0,#a855f7)}.join{background:linear-gradient(135deg,#ec4899,#e83e91)}
-.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:0 8px 22px rgba(31,42,68,.07);text-align:left}label{display:block;font-weight:800;margin:0 0 8px}input{width:100%;padding:16px;border:2px solid #d7dfeb;border-radius:14px;outline:none;margin-bottom:18px;color:var(--ink);font-size:19px}input:focus{border-color:var(--purple)}
-.code{font-size:34px;text-align:center;font-weight:900;letter-spacing:8px;text-transform:uppercase}.small{font-size:14px;color:var(--muted)}.room-head{display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap}.room-code{font-size:28px;font-weight:900;background:#f0edff;padding:10px 16px;border-radius:14px}
-.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:20px}.player{padding:15px;border:1px solid var(--line);border-radius:14px;background:#fafbfe;font-weight:700}
-.alert{padding:14px 16px;border-radius:14px;margin:14px 0;display:none}.alert.show{display:block}.alert.err{background:#fff1f2;color:#b91c1c}.alert.ok{background:#ecfdf5;color:#166534}.hidden{display:none!important}
-@media(max-width:650px){header{padding:0 16px;height:70px}.logo{font-size:22px}.mode{font-size:14px;padding:8px 12px}main{padding:22px 14px 40px}h1{font-size:34px}.btn{font-size:21px;padding:18px}.card{padding:21px}.code{font-size:29px}}
+:root{--p:#5146e5;--p2:#914cf3;--pink:#e83e91;--ink:#1d2a44;--muted:#71819c;--bg:#f5f8fc;--line:#e2e8f0;--green:#16a34a;--red:#ef4444}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:linear-gradient(135deg,#f7faff,#edf3fa);color:var(--ink)}
+.shell{max-width:1200px;min-height:100vh;margin:auto;background:#fff;box-shadow:0 15px 50px #1d2a4420}
+header{height:82px;background:var(--p);color:white;padding:0 28px;display:flex;align-items:center;justify-content:space-between}.logo{font-size:30px;font-weight:900}.mode{background:#ffffff22;border-radius:25px;padding:10px 18px;font-weight:800}
+main{padding:30px 22px 60px}.center{max-width:760px;margin:auto;text-align:center}h1{font-size:42px;margin:20px 0 8px}.sub{font-size:19px;color:var(--muted);margin-bottom:28px}.back{border:0;background:none;color:#687c98;font-size:20px;cursor:pointer;margin-bottom:20px}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:0 8px 25px #1d2a4410;text-align:left}.status{margin-bottom:25px}.dot{width:14px;height:14px;border-radius:50%;background:var(--red);display:inline-block;margin-right:8px}.dot.ok{background:var(--green)}
+.btn{width:100%;border:0;border-radius:18px;padding:18px;margin:9px 0;color:#fff;font-size:22px;font-weight:900;cursor:pointer;box-shadow:0 8px 18px #1d2a4420}.btn:disabled{opacity:.5;cursor:not-allowed}.purple{background:linear-gradient(135deg,var(--p2),#a855f7)}.pink{background:linear-gradient(135deg,#ec4899,#e83e91)}.dark{background:#253653}
+label{display:block;font-weight:800;margin-bottom:8px}input{width:100%;padding:15px;border:2px solid #d5deeb;border-radius:14px;font-size:18px;margin-bottom:18px;outline:none}input:focus{border-color:var(--p)}
+.alert{display:none;padding:14px;border-radius:14px;margin-top:12px}.alert.show{display:block}.err{background:#fff1f2;color:#b91c1c}.ok{background:#ecfdf5;color:#166534}
+.hidden{display:none!important}.room{max-width:900px;margin:auto}.roomtop{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.code{font-size:28px;font-weight:900;background:#efecff;padding:9px 15px;border-radius:14px}.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:15px 0 25px}.player{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fafbff;font-weight:800}
+.question{margin-top:20px}.qnum{font-size:14px;color:var(--muted);font-weight:800}.qtext{font-size:29px;line-height:1.25;font-weight:900;margin:10px 0 20px}.answers{display:grid;grid-template-columns:1fr 1fr;gap:14px}.answer{border:0;border-radius:16px;padding:18px;background:#eef2ff;color:var(--ink);font-size:18px;font-weight:800;cursor:pointer;text-align:left}.answer:hover{background:#e4e7ff}.answer.selected{outline:4px solid #a78bfa}.answer.correct{background:#dcfce7;color:#166534}.answer.wrong{background:#fee2e2;color:#991b1b}.scoreboard{margin-top:20px}.score{display:flex;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line)}.score:last-child{border:0}.result{font-size:18px;font-weight:900;margin:15px 0}
+.hostbar{display:flex;gap:10px;flex-wrap:wrap}.hostbar .btn{flex:1;min-width:180px}.tiny{font-size:14px;color:var(--muted)}
+@media(max-width:650px){header{height:70px;padding:0 16px}.logo{font-size:22px}.mode{font-size:14px;padding:8px 12px}main{padding:20px 14px 40px}h1{font-size:34px}.answers{grid-template-columns:1fr}.qtext{font-size:24px}}
 </style>
 </head>
 <body>
-<div class="app"><div class="shell">
-<header><div class="logo"><span class="dice">🎲</span>Perguntados Board</div><div class="mode">Modo Online</div></header>
+<div class="shell">
+<header><div class="logo">🎲 Perguntados Board</div><div class="mode">Modo Online</div></header>
 <main>
-<button class="back" id="backBtn">← Voltar</button>
+<button class="back" id="back">← Voltar</button>
+
 <section id="home" class="center">
-<h1>Modo Online</h1><p class="subtitle">Crie uma sala e jogue com outras pessoas em tempo real.</p>
-<div class="status"><div class="status-title"><span id="dot" class="dot"></span><span id="statusTitle">Conectando...</span></div><div id="statusMsg" class="status-msg">Inicializando Firebase...</div></div>
-<button class="btn create" id="createBtn" disabled>Criar Nova Sala</button><button class="btn join" id="joinBtn" disabled>Entrar com Senha</button><div id="homeAlert" class="alert"></div>
+<h1>Modo Online</h1><p class="sub">Crie uma sala e jogue com outras pessoas em tempo real.</p>
+<div class="card status"><b><span id="dot" class="dot"></span><span id="st">Conectando...</span></b><div id="stm" class="tiny" style="margin-top:8px">Inicializando Firebase...</div></div>
+<button class="btn purple" id="newBtn" disabled>Criar Nova Sala</button>
+<button class="btn pink" id="enterBtn" disabled>Entrar com Senha</button><div id="homeErr" class="alert"></div>
 </section>
-<section id="createView" class="center hidden"><h1>Criar Nova Sala</h1><p class="subtitle">Digite seu nome. Uma senha de 4 caracteres será criada.</p><div class="card"><label for="hostName">Seu nome</label><input id="hostName" maxlength="30" placeholder="Ex.: Professor Lourenço"><button class="btn create" id="doCreate">Criar Sala</button><div id="createAlert" class="alert"></div></div></section>
-<section id="createdView" class="center hidden"><h1>Sala criada!</h1><p class="subtitle">Envie esta senha para os participantes.</p><div class="card"><div class="small">SENHA DA SALA</div><div id="createdCode" class="code">----</div><p class="small">A sala permanece disponível enquanto estiver ativa.</p><button class="btn create" id="copyCode">Copiar senha</button><button class="btn join" id="goRoom">Abrir sala</button><div id="createdAlert" class="alert"></div></div></section>
-<section id="joinView" class="center hidden"><h1>Entrar na Sala</h1><p class="subtitle">Digite seu nome e a senha de 4 caracteres.</p><div class="card"><label for="playerName">Seu nome</label><input id="playerName" maxlength="30" placeholder="Ex.: João"><label for="roomPassword">Senha</label><input id="roomPassword" class="code" maxlength="4" placeholder="ABCD" autocomplete="off"><button class="btn join" id="doJoin">Entrar</button><div id="joinAlert" class="alert"></div></div></section>
-<section id="roomView" class="center hidden"><div class="card"><div class="room-head"><div><div class="small">SALA</div><div id="roomTitle" class="room-code">----</div></div><button class="back" id="leaveBtn">Sair</button></div><h2 id="welcome">Sala online</h2><p class="subtitle" style="text-align:left">Participantes conectados:</p><div id="players" class="players"></div><div id="roomAlert" class="alert"></div></div></section>
-</main></div></div>
+
+<section id="create" class="center hidden"><h1>Criar Nova Sala</h1><p class="sub">Digite seu nome.</p><div class="card"><label>Seu nome</label><input id="hostName" placeholder="Ex.: Professor"><button class="btn purple" id="createBtn">Criar Sala</button><div id="createErr" class="alert"></div></div></section>
+
+<section id="join" class="center hidden"><h1>Entrar na Sala</h1><p class="sub">Digite seu nome e a senha de 4 caracteres.</p><div class="card"><label>Seu nome</label><input id="joinName" placeholder="Ex.: João"><label>Senha</label><input id="joinCode" maxlength="4" style="text-transform:uppercase;text-align:center;font-size:30px;font-weight:900;letter-spacing:7px"><button class="btn pink" id="joinBtn">Entrar</button><div id="joinErr" class="alert"></div></div></section>
+
+<section id="room" class="room hidden">
+<div class="card">
+<div class="roomtop"><div><div class="tiny">SENHA DA SALA</div><div id="roomCode" class="code">----</div></div><button class="back" id="leave">Sair</button></div>
+<h2 id="roomWelcome">Sala</h2>
+<div class="tiny">Participantes conectados</div><div id="players" class="players"></div>
+
+<div id="hostControls" class="hostbar hidden">
+<button class="btn purple" id="startQuestion">▶ Iniciar Pergunta</button>
+<button class="btn dark" id="nextQuestion">Próxima Pergunta</button>
+</div>
+
+<div id="questionBox" class="question hidden">
+<div class="qnum" id="qnum"></div>
+<div class="qtext" id="qtext"></div>
+<div id="answers" class="answers"></div>
+<div id="answerResult" class="result"></div>
+<div id="questionInfo" class="tiny"></div>
+</div>
+
+<div id="scores" class="scoreboard hidden"><h3>🏆 Placar</h3><div id="scoreList"></div></div>
+<div id="roomErr" class="alert"></div>
+</div>
+</section>
+</main>
+</div>
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {getAuth,signInAnonymously,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
-import {getFirestore,collection,addDoc,doc,getDocs,updateDoc,query,where,onSnapshot,serverTimestamp,arrayUnion} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+import {getFirestore,collection,addDoc,doc,getDocs,updateDoc,query,where,onSnapshot,arrayUnion} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 const firebaseConfig={
  apiKey:"AIzaSyBG6wN4xK-hu16gfLEDiFgalopQ0ShsxGE",
@@ -50,68 +77,91 @@ const firebaseConfig={
  appId:"1:294527320589:web:48d83956888732beb2cb44"
 };
 
+const questions=[
+ {q:"Qual é a capital do Brasil?",a:["São Paulo","Brasília","Rio de Janeiro","Salvador"],c:1},
+ {q:"Quanto é 7 × 8?",a:["48","54","56","64"],c:2},
+ {q:"Qual planeta é conhecido como Planeta Vermelho?",a:["Vênus","Marte","Júpiter","Saturno"],c:1},
+ {q:"Qual é o maior oceano da Terra?",a:["Atlântico","Índico","Ártico","Pacífico"],c:3},
+ {q:"Quem escreveu Dom Casmurro?",a:["Machado de Assis","José de Alencar","Carlos Drummond","Monteiro Lobato"],c:0},
+ {q:"Quantos lados tem um hexágono?",a:["5","6","7","8"],c:1},
+ {q:"Qual é o símbolo químico da água?",a:["CO₂","O₂","H₂O","NaCl"],c:2},
+ {q:"Em que continente fica o Brasil?",a:["Europa","África","América do Sul","Ásia"],c:2}
+];
+
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
-let currentUser=null,currentRoomId=null,unsubscribeRoom=null;
-const $=id=>document.getElementById(id);
-const views=["home","createView","createdView","joinView","roomView"];
-function show(id){views.forEach(v=>$(v).classList.toggle("hidden",v!==id))}
-function alertBox(id,msg,type="err"){const e=$(id);e.textContent=msg;e.className="alert show "+type}
-function clearAlert(id){$(id).className="alert"}
-function randomCode(){const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<4;i++)s+=c[Math.floor(Math.random()*c.length)];return s}
-function cleanName(v){return v.trim().replace(/\s+/g," ").slice(0,30)}
-function setConnected(ok,msg){$("dot").className="dot"+(ok?" ok":"");$("statusTitle").textContent=ok?"Firebase conectado":"Firebase não conectado";$("statusMsg").textContent=msg;$("createBtn").disabled=!ok;$("joinBtn").disabled=!ok}
-function translateError(e){const c=e?.code||"";if(c.includes("api-key-not-valid"))return"A chave da API foi rejeitada pelo Google. Confirme a chave do app Web no Firebase.";if(c.includes("operation-not-allowed"))return"Login anônimo está desativado. Ative Authentication → Método de login → Anônimo.";if(c.includes("permission-denied"))return"Firestore recusou o acesso. Verifique as regras do banco.";return e?.message||"Erro desconhecido."}
+let user=null,roomId=null,unsub=null,roomData=null,localQuestion=-1,answered=false;
+const $=x=>document.getElementById(x);
+const views=["home","create","join","room"];
+function show(v){views.forEach(x=>$(x).classList.toggle("hidden",x!==v))}
+function err(id,msg,ok=false){const e=$(id);e.textContent=msg;e.className="alert show "+(ok?"ok":"err")}
+function clear(id){$(id).className="alert"}
+function code4(){const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join("")}
+function name(v){return v.trim().replace(/\s+/g," ").slice(0,30)}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function firebaseError(e){if(e?.code?.includes("permission-denied"))return"Firestore recusou o acesso. Verifique as regras do banco.";if(e?.code?.includes("operation-not-allowed"))return"Ative o login Anônimo em Authentication → Método de login.";return e?.message||"Erro desconhecido."}
 
-async function boot(){
- try{await signInAnonymously(auth);onAuthStateChanged(auth,u=>{currentUser=u;if(u)setConnected(true,"Conexão ativa. Você pode criar ou entrar em uma sala.")})}
- catch(e){console.error(e);setConnected(false,translateError(e));alertBox("homeAlert","Falha ao autenticar no Firebase: "+translateError(e))}
-}
-$("createBtn").onclick=()=>{show("createView");clearAlert("createAlert")};
-$("joinBtn").onclick=()=>{show("joinView");clearAlert("joinAlert")};
-$("backBtn").onclick=()=>{if(!$("home").classList.contains("hidden"))return;show("home")};
+onAuthStateChanged(auth,u=>{user=u;if(u){$("dot").className="dot ok";$("st").textContent="Firebase conectado";$("stm").textContent="Conexão ativa. Você pode criar ou entrar em uma sala.";$("newBtn").disabled=false;$("enterBtn").disabled=false}});
+signInAnonymously(auth).catch(e=>{console.error(e);$("stm").textContent=firebaseError(e);err("homeErr",firebaseError(e))});
 
-$("doCreate").onclick=async()=>{
- clearAlert("createAlert");if(!currentUser){alertBox("createAlert","Firebase ainda não está conectado.");return}
- const name=cleanName($("hostName").value);if(name.length<2){alertBox("createAlert","Digite seu nome.");return}
- $("doCreate").disabled=true;
+$("newBtn").onclick=()=>{show("create");clear("createErr")};
+$("enterBtn").onclick=()=>{show("join");clear("joinErr")};
+$("back").onclick=()=>{if(!$("home").classList.contains("hidden"))return;show("home")};
+
+$("createBtn").onclick=async()=>{
+ clear("createErr");const n=name($("hostName").value);if(n.length<2)return err("createErr","Digite seu nome.");
  try{
-  let code=randomCode(),exists=true;
-  for(let i=0;i<8&&exists;i++){const s=await getDocs(query(collection(db,"salas"),where("password","==",code)));exists=!s.empty;if(exists)code=randomCode()}
-  const ref=await addDoc(collection(db,"salas"),{password:code,hostUid:currentUser.uid,hostName:name,active:true,createdAt:serverTimestamp(),players:[{uid:currentUser.uid,name,host:true}]});
-  currentRoomId=ref.id;$("createdCode").textContent=code;show("createdView");
- }catch(e){console.error(e);alertBox("createAlert",translateError(e))}
- finally{$("doCreate").disabled=false}
+  let code=code4(),snap;for(let i=0;i<5;i++){snap=await getDocs(query(collection(db,"salas"),where("password","==",code),where("active","==",true)));if(snap.empty)break;code=code4()}
+  const ref=await addDoc(collection(db,"salas"),{password:code,active:true,hostUid:user.uid,hostName:n,questionIndex:-1,answers:{},players:[{uid:user.uid,name:n,host:true,score:0}],createdAt:new Date()});
+  roomId=ref.id;openRoom();
+ }catch(e){console.error(e);err("createErr",firebaseError(e))}
 };
 
-$("copyCode").onclick=async()=>{try{await navigator.clipboard.writeText($("createdCode").textContent);alertBox("createdAlert","Senha copiada!","ok")}catch{alertBox("createdAlert","Senha: "+$("createdCode").textContent,"ok")}};
-$("goRoom").onclick=()=>openRoom(currentRoomId);
-
-$("doJoin").onclick=async()=>{
- clearAlert("joinAlert");if(!currentUser){alertBox("joinAlert","Firebase ainda não está conectado.");return}
- const name=cleanName($("playerName").value),code=$("roomPassword").value.trim().toUpperCase();
- if(name.length<2){alertBox("joinAlert","Digite seu nome.");return}if(!/^[A-Z0-9]{4}$/.test(code)){alertBox("joinAlert","A senha precisa ter 4 caracteres.");return}
- $("doJoin").disabled=true;
+$("joinBtn").onclick=async()=>{
+ clear("joinErr");const n=name($("joinName").value),c=$("joinCode").value.trim().toUpperCase();
+ if(n.length<2)return err("joinErr","Digite seu nome.");if(!/^[A-Z0-9]{4}$/.test(c))return err("joinErr","Digite uma senha de 4 caracteres.");
  try{
-  const snap=await getDocs(query(collection(db,"salas"),where("password","==",code),where("active","==",true)));
-  if(snap.empty){alertBox("joinAlert","Sala não encontrada. Confira a senha.");return}
-  const room=snap.docs[0],data=room.data(),players=Array.isArray(data.players)?data.players:[];
-  if(!players.some(p=>p.uid===currentUser.uid))await updateDoc(doc(db,"salas",room.id),{players:arrayUnion({uid:currentUser.uid,name,host:false})});
-  currentRoomId=room.id;openRoom(room.id);
- }catch(e){console.error(e);alertBox("joinAlert",translateError(e))}
- finally{$("doJoin").disabled=false}
+  const s=await getDocs(query(collection(db,"salas"),where("password","==",c),where("active","==",true)));if(s.empty)return err("joinErr","Sala não encontrada.");
+  const d=s.docs[0],data=d.data(),players=data.players||[];roomId=d.id;
+  if(!players.some(p=>p.uid===user.uid))await updateDoc(doc(db,"salas",roomId),{players:arrayUnion({uid:user.uid,name:n,host:false,score:0})});
+  openRoom();
+ }catch(e){console.error(e);err("joinErr",firebaseError(e))}
 };
 
-function openRoom(id){
- if(unsubscribeRoom)unsubscribeRoom();currentRoomId=id;show("roomView");
- unsubscribeRoom=onSnapshot(doc(db,"salas",id),snap=>{
-  if(!snap.exists()){alertBox("roomAlert","Esta sala não existe mais.");return}
-  const d=snap.data();$("roomTitle").textContent=d.password||"----";$("welcome").textContent=d.hostUid===currentUser?.uid?"Você é o organizador da sala.":"Você entrou na sala!";
-  const players=Array.isArray(d.players)?d.players:[];$("players").innerHTML=players.map(p=>`<div class="player">${p.host?"👑 ":"👤 "}${escapeHtml(p.name)}</div>`).join("");
- },e=>alertBox("roomAlert",translateError(e)));
+function openRoom(){
+ show("room");clear("roomErr");$("roomCode").textContent="...";$("questionBox").classList.add("hidden");$("scores").classList.add("hidden");
+ if(unsub)unsub();
+ unsub=onSnapshot(doc(db,"salas",roomId),snap=>{
+  if(!snap.exists())return err("roomErr","Sala não encontrada.");
+  roomData=snap.data();renderRoom();
+ },e=>err("roomErr",firebaseError(e)));
 }
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
-$("leaveBtn").onclick=()=>{if(unsubscribeRoom)unsubscribeRoom();unsubscribeRoom=null;currentRoomId=null;show("home")};
-boot();
+function renderRoom(){
+ const d=roomData,players=d.players||[],host=d.hostUid===user.uid;
+ $("roomCode").textContent=d.password||"----";$("roomWelcome").textContent=host?"Você é o organizador da sala.":"Você está participando da sala.";
+ $("players").innerHTML=players.map(p=>`<div class="player">${p.host?"👑":"👤"} ${esc(p.name)} <span style="float:right">${p.score||0} pts</span></div>`).join("");
+ $("hostControls").classList.toggle("hidden",!host);
+ if(d.questionIndex>=0){renderQuestion(d.questionIndex,d.answers||{},players)}else{$("questionBox").classList.add("hidden");$("scores").classList.add("hidden")}
+}
+function renderQuestion(i,answers,players){
+ const q=questions[i%questions.length];$("questionBox").classList.remove("hidden");$("qnum").textContent=`PERGUNTA ${i+1} DE ${questions.length}`;$("qtext").textContent=q.q;
+ $("answers").innerHTML=q.a.map((x,k)=>`<button class="answer" data-i="${k}">${String.fromCharCode(65+k)}) ${esc(x)}</button>`).join("");
+ answered=answers?.[user.uid]!=null;
+ if(answered){document.querySelectorAll(".answer").forEach(b=>{b.disabled=true;b.classList.toggle("selected",Number(b.dataset.i)===answers[user.uid])});$("answerResult").textContent=answers[user.uid]===q.c?"✅ Resposta correta! +10 pontos":"❌ Resposta incorreta."}
+ else $("answerResult").textContent="";
+ $("questionInfo").textContent=`${Object.keys(answers||{}).length}/${players.length} participantes responderam.`;
+ $("scores").classList.remove("hidden");renderScores(players);
+ document.querySelectorAll(".answer").forEach(b=>b.onclick=()=>answer(Number(b.dataset.i)));
+}
+function renderScores(players){$("scoreList").innerHTML=[...players].sort((a,b)=>(b.score||0)-(a.score||0)).map((p,i)=>`<div class="score"><b>${i+1}. ${esc(p.name)}</b><span>${p.score||0} pts</span></div>`).join("")}
+async function answer(index){
+ if(answered||!roomData)return;answered=true;const q=questions[roomData.questionIndex%questions.length],players=roomData.players||[],me=players.find(p=>p.uid===user.uid);if(!me)return;
+ const correct=index===q.c,newPlayers=players.map(p=>p.uid===user.uid?{...p,score:(p.score||0)+(correct?10:0)}:p);
+ const answers={...(roomData.answers||{}),[user.uid]:index};
+ try{await updateDoc(doc(db,"salas",roomId),{answers,players:newPlayers})}catch(e){answered=false;err("roomErr",firebaseError(e))}
+}
+$("startQuestion").onclick=async()=>{try{await updateDoc(doc(db,"salas",roomId),{questionIndex:0,answers:{}})}catch(e){err("roomErr",firebaseError(e))}};
+$("nextQuestion").onclick=async()=>{if(!roomData)return;const n=(roomData.questionIndex+1)%questions.length;try{await updateDoc(doc(db,"salas",roomId),{questionIndex:n,answers:{}})}catch(e){err("roomErr",firebaseError(e))}};
+$("leave").onclick=()=>{if(unsub)unsub();unsub=null;roomId=null;roomData=null;show("home")};
 </script>
 </body>
 </html>
